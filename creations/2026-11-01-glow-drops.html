@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; form-action 'none'; frame-src 'none'; base-uri 'none'">
+<html><head><meta charset="utf-8"><title>Glow Drops</title>
+<style>
+html,body{margin:0;height:100%;background:#0a0f24;overflow:hidden;font-family:monospace}
+canvas{display:block;width:100%;height:100%;cursor:crosshair}
+#t{position:fixed;top:10px;left:0;right:0;text-align:center;color:#cfe8ff;font-size:14px;pointer-events:none}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="t">click the sky to let a glow drop &middot; caught: <span id="n">0</span></div>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d'),out=document.getElementById('n');
+let W,H,gs=[],sp=[],caught=0;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight}
+rs();onresize=rs;
+function drop(px,py){
+  gs.push({x:px,y:py,vx:(Math.random()-.5)*1.5,vy:1+Math.random()*2,
+    h:Math.floor(Math.random()*80)+170,r:4+Math.random()*5});
+}
+function burst(px,py,h){
+  for(let i=0;i<10;i++){
+    const a=Math.random()*Math.PI,s=1+Math.random()*3;
+    sp.push({x:px,y:py,vx:Math.cos(a)*s,vy:-Math.sin(a)*s,h:h,l:1});
+  }
+}
+c.addEventListener('pointerdown',function(e){
+  drop(e.clientX,e.clientY);
+  if(Math.random()<.4)drop(e.clientX+20,e.clientY-10);
+});
+function tick(){
+  x.fillStyle='rgba(10,15,36,0.18)';
+  x.fillRect(0,0,W,H);
+  if(Math.random()<.03)drop(Math.random()*W,-10);
+  for(let i=gs.length-1;i>=0;i--){
+    const g=gs[i];
+    g.x+=g.vx;g.y+=g.vy;g.vy+=0.03;
+    x.beginPath();
+    x.fillStyle='hsl('+g.h+',90%,75%)';
+    x.shadowColor='hsl('+g.h+',100%,70%)';
+    x.shadowBlur=18;
+    x.arc(g.x,g.y,g.r,0,6.3);
+    x.fill();
+    if(g.y>H-10){
+      burst(g.x,H-10,g.h);
+      caught++;out.textContent=caught;
+      gs.splice(i,1);
+    }
+  }
+  for(let i=sp.length-1;i>=0;i--){
+    const p=sp[i];
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.12;p.l-=0.02;
+    if(p.l<=0){sp.splice(i,1);continue}
+    x.beginPath();
+    x.fillStyle='hsla('+p.h+',90%,80%,'+p.l+')';
+    x.shadowBlur=8;
+    x.arc(p.x,p.y,2,0,6.3);
+    x.fill();
+  }
+  requestAnimationFrame(tick);
+}
+tick();
+</script>
+</body></html>
